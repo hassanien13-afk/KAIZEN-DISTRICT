@@ -79,7 +79,7 @@ h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.4vw,48px)
 .chip b{color:var(--ink);font-weight:600}
 
 /* workbench */
-.bench{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:24px;align-items:start;padding-block:8px 48px}
+.bench{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:24px;align-items:start;padding-block:8px 48px}
 @media (max-width:980px){.bench{grid-template-columns:minmax(0,1fr)}}
 
 /* inputs rail */
@@ -142,9 +142,7 @@ svg .vtxt{font-family:var(--f-num);fill:var(--ink)}
 .legend .num{text-align:left}
 
 /* land use */
-.plot{display:grid;grid-template-columns:180px minmax(0,1fr);gap:20px;align-items:center}
-@media (max-width:560px){.plot{grid-template-columns:minmax(0,1fr)}}
-.plot svg{width:100%;max-width:180px;height:auto}
+.plot{display:block}
 
 /* tables */
 table{width:100%;border-collapse:collapse;font-size:13.5px}
@@ -189,8 +187,10 @@ tr.big td{font-weight:700;font-size:14.5px;color:var(--accent)}
 .x{border:0;background:transparent;font-size:18px;line-height:1;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:6px}
 .x:hover:not(:disabled){color:var(--neg);background:var(--neg-soft)} .x:disabled{opacity:.3;cursor:default}
 .plan-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.pc{display:grid;gap:2px;font-size:11.5px;color:var(--muted);min-width:0}
-.pc .inp input{padding:4px 6px;font-size:12.5px}
+.pc{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;font-size:11.5px;color:var(--muted);min-width:0}
+.pc .inp{min-width:0}
+.plan,.plan-g{min-width:0}
+.pc .inp input{padding:4px 6px;font-size:12.5px;width:100%;min-width:0}
 .pc .inp span{padding-inline:5px;font-size:10.5px}
 .plan-sum{display:flex;gap:6px;flex-wrap:wrap}
 .sumchip{font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line)}
@@ -390,7 +390,6 @@ footer .wrap{padding-block:18px;display:flex;flex-wrap:wrap;gap:8px 24px;justify
       <h3>استعمالات الأرض والمساحات</h3>
       <p class="sub">بصمة المباني على الأرض ومسطحات البناء والمساحات البيعية.</p>
       <div class="plot">
-        <svg id="sitePlan" viewBox="0 0 180 180" role="img" aria-label="مخطط استعمالات الأرض"></svg>
         <div class="scroll"><table id="areaTable"></table></div>
       </div>
     </section>
@@ -862,21 +861,6 @@ function fillComp(id,rows,tot){
 }
 
 function renderSite(){
-  // schematic parcel: square, building footprints as a grid, commercial strip along the main road
-  var S=180, pad=8, inner=S-2*pad, area=r.land;
-  var s='<rect x="'+pad+'" y="'+pad+'" width="'+inner+'" height="'+inner+'" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>';
-  // commercial strip along the top (main road)
-  var comH=Math.max(4,inner*(r.comG/area)*2.2);
-  s+='<rect x="'+(pad+10)+'" y="'+(pad+6)+'" width="'+(inner-20)+'" height="'+comH+'" rx="2" fill="var(--c3)"/>';
-  // residential footprints
-  var n=r.bldgs, cols=Math.ceil(Math.sqrt(n*1.2)), rows=Math.ceil(n/cols);
-  var ax=pad+10, ay=pad+12+comH, aw=inner-20, ah=inner-24-comH;
-  var cellW=aw/cols, cellH=ah/rows, side=Math.sqrt((r.ground/n)/area)*inner;
-  for(var i=0;i<n;i++){var c=i%cols, rr=Math.floor(i/cols);
-    var bw=Math.min(side,cellW-3), bh=Math.min(side,cellH-3);
-    s+='<rect x="'+(ax+c*cellW+(cellW-bw)/2)+'" y="'+(ay+rr*cellH+(cellH-bh)/2)+'" width="'+bw+'" height="'+bh+'" rx="1.5" fill="var(--c1)"/>';}
-  s+='<text x="'+(S/2)+'" y="'+(S-1)+'" text-anchor="middle" font-size="9">مخطط توضيحي</text>';
-  document.getElementById("sitePlan").innerHTML=s;
 
   var rows2=[
     ["grp","استعمالات الأرض"],
@@ -1287,7 +1271,7 @@ function buildReport(){
   B.push('<h2>الملخص المالي</h2>'+cloneHTML("kpis"));
   B.push('<h2>من المبيعات إلى صافي الربح</h2><p class="sub">مليون جنيه</p>'+cloneHTML("waterfall"));
   var g2=document.querySelector(".results > .grid2"); B.push('<h2>هيكل التكاليف ومصادر الإيراد</h2>'+stripIds(g2.outerHTML));
-  B.push('<h2>استعمالات الأرض والمساحات</h2>'+stripIds(document.getElementById("sitePlan").closest(".plot").outerHTML));
+  B.push('<h2>استعمالات الأرض والمساحات</h2>'+stripIds(document.getElementById("areaTable").closest(".plot").outerHTML));
   var cfp=document.getElementById("cashflow");
   B.push('<h2>التدفقات النقدية</h2><p class="sub">'+stripIds(cfp.querySelector(".sub").innerHTML)+'</p>'+cloneHTML("cfKpis")+cloneHTML("cfChart")+stripIds(cfp.querySelector(".cflegend").outerHTML));
   chunkCols(cloneHTML("cfTable"),12).forEach(function(t,i){ B.push((i===0?'<h4>جدول التدفقات النقدية السنوي (مليون جنيه)</h4>':'')+'<div class="cftable">'+t+'</div>'); });
