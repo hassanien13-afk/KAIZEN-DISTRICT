@@ -296,9 +296,12 @@ footer .wrap{padding-block:18px;display:flex;flex-wrap:wrap;gap:8px 24px;justify
 .rep .panel{border:0;padding:0}
 .rep table{font-size:11.5px}
 .rep th,.rep td{padding:5px 7px}
-.rep .cftable table{min-width:0;width:100%;font-size:9.5px;table-layout:auto}
-.rep .cftable th,.rep .cftable td{padding:3px 3px;letter-spacing:-.2px}
-.rep .cftable td.stick,.rep .cftable th.stick{white-space:normal;width:118px;min-width:0;max-width:118px;line-height:1.3}
+.rep .cftable table{min-width:0;width:100%;font-size:8.8px;table-layout:fixed;border-collapse:collapse}
+.rep .cftable th,.rep .cftable td{padding:3px 1px;letter-spacing:-.3px;text-align:center!important;overflow:hidden}
+.rep .cftable th{white-space:normal;line-height:1.2;font-size:9px;font-weight:600}
+.rep .cftable td.stick,.rep .cftable th.stick{white-space:normal;width:104px;min-width:0;max-width:104px;line-height:1.25;text-align:right!important;padding-inline:3px}
+.rep .cftable tr.grp td{padding-top:4px;padding-bottom:4px;font-size:9.5px}
+.rep .cftable tr.big td{font-size:9.5px}
 .rep .cftable .hs{display:block;font-size:9px}
 .rep .cftable .stick{position:static;min-width:0}
 .rep .htable{font-size:10.5px}
@@ -1494,8 +1497,8 @@ function buildReport(){
   B.push('<h2>استعمالات الأرض والمساحات</h2>'+stripIds(document.getElementById("areaTable").closest(".plot").outerHTML));
   var cfp=document.getElementById("cashflow");
   B.push('<h2>التدفقات النقدية</h2><p class="sub">'+stripIds(cfp.querySelector(".sub").innerHTML)+'</p>'+cloneHTML("cfKpis")+cloneHTML("cfChart")+stripIds(cfp.querySelector(".cflegend").outerHTML));
-  chunkCols(cloneHTML("cfTable"),12).forEach(function(t,i){ B.push((i===0?'<h4>جدول التدفقات النقدية السنوي (مليون جنيه)</h4>':'')+'<div class="cftable">'+t+'</div>'); });
-  chunkCols('<table>'+hcfAllHTML()+'</table>',12).forEach(function(t,i){ B.push((i===0?'<h2>التدفق النقدي لكل مساهم</h2><p class="sub">صافي التدفق النقدي السنوي والرصيد التراكمي لكل مساهم بنسبة مساهمته (مليون جنيه). أقصى احتياج تمويلي: '+holderList().map(function(x){return esc(x.n)+' '+mil(-cf.peak*x.s);}).join(" · ")+'.</p>':'')+'<div class="cftable">'+t+'</div>'); });
+  chunkCols(cloneHTML("cfTable"),16).forEach(function(t,i){ B.push('<!--fit-->'+(i===0?'<h4>جدول التدفقات النقدية السنوي (مليون جنيه)</h4>':'')+'<div class="cftable">'+t+'</div>'); });
+  chunkCols('<table>'+hcfAllHTML()+'</table>',16).forEach(function(t,i){ B.push('<!--fit-->'+(i===0?'<h2>التدفق النقدي لكل مساهم</h2><p class="sub">صافي التدفق النقدي السنوي والرصيد التراكمي لكل مساهم بنسبة مساهمته (مليون جنيه). أقصى احتياج تمويلي: '+holderList().map(function(x){return esc(x.n)+' '+mil(-cf.peak*x.s);}).join(" · ")+'.</p>':'')+'<div class="cftable">'+t+'</div>'); });
   B.push('<h2>حساسية صافي الربح</h2><p class="sub">أثر تغيّر كل متغير بنسبة ±10% على صافي ربح المشروع (مليون جنيه).</p>'+cloneHTML("tornado"));
   B.push('<h2>توزيع الالتزامات والأرباح على المساهمين</h2><p class="sub">'+esc(document.getElementById("holdersSub").textContent)+'</p>'+cloneHTML("shareBar")+cloneHTML("holdersTable"));
   chunkRows(cloneHTML("statement"),20).forEach(function(t,i){ B.push((i===0?'<h2>القائمة التفصيلية</h2>':'')+t); });
@@ -1505,7 +1508,7 @@ function buildReport(){
   var logo=document.querySelector(".logo img").src;
   rep.innerHTML='<div class="rph" id="repHead"><div class="b"><img src="'+logo+'" alt=""><div><b>'+esc(COMPANY_NAME)+'</b></div></div><div class="p"><b>'+esc(headerTitle())+'</b><small>الإصدار <span class="num">'+esc(v)+'</span> · <span class="num">'+today()+'</span></small></div></div>'+
     '<div class="rpf" id="repFoot"><span>'+esc(COMPANY_NAME)+' · '+esc(headerTitle())+' · الإصدار <span class="num">'+esc(v)+'</span></span><span id="repPage"></span></div>'+
-    B.map(function(b){return '<div class="rb">'+b+'</div>';}).join("");
+    B.map(function(b){var fit=b.indexOf('<!--fit-->')===0; return '<div class="rb'+(fit?' fit':'')+'">'+b+'</div>';}).join("");
   return rep;
 }
 var pdfBusy=false;
@@ -1528,7 +1531,7 @@ function exportPdf(){
     var PW=210, PH=297, MX=12, CW=PW-2*MX;
     var blocks=[].slice.call(rep.querySelectorAll(".rb")), canv=[];
     var headCanvas, chain=H2I.toCanvas(document.getElementById("repHead"),opts).then(function(c){headCanvas=c;});
-    blocks.forEach(function(b,i){ chain=chain.then(function(){ lbl.textContent="جاري إعداد ملف PDF… "+Math.round((i+1)/blocks.length*90)+"%"; return H2I.toCanvas(b,opts).then(function(c){canv.push(c);}); }); });
+    blocks.forEach(function(b,i){ chain=chain.then(function(){ lbl.textContent="جاري إعداد ملف PDF… "+Math.round((i+1)/blocks.length*90)+"%"; return H2I.toCanvas(b,opts).then(function(c){c._fit=b.classList.contains("fit"); canv.push(c);}); }); });
     return chain.then(function(){
       var hh=headCanvas.height/headCanvas.width*CW, top=8+hh+4, footH=8, bottom=PH-8-footH-3, avail=bottom-top;
       var pages=[[]], y=top;
@@ -1537,6 +1540,10 @@ function exportPdf(){
         if(h<=avail){
           if(y+h>bottom && y>top){pages.push([]); y=top;}
           pages[pages.length-1].push({c:c,sy:0,sh:c.height,y:y,h:h}); y+=h+3;
+        } else if(c._fit){ // a table that must stay whole: start a page and shrink it to fit
+          if(y>top) pages.push([]);
+          var w=CW*avail/h;
+          pages[pages.length-1].push({c:c,sy:0,sh:c.height,y:top,h:avail,w:w,x:MX+(CW-w)/2}); pages.push([]); y=top;
         } else { // taller than a page: slice
           var pxPerMm=c.height/h, sy=0;
           if(y>top){pages.push([]); y=top;}
@@ -1547,6 +1554,7 @@ function exportPdf(){
           }
         }
       });
+      pages=pages.filter(function(pg){return pg.length;});
       var headImg=headCanvas.toDataURL("image/jpeg",0.92), total=pages.length, k=0;
       var footChain=Promise.resolve(), foots=[];
       pages.forEach(function(_,i){ footChain=footChain.then(function(){ document.getElementById("repPage").innerHTML='صفحة <b>'+(i+1)+'</b> من <b>'+total+'</b>'; return H2I.toCanvas(document.getElementById("repFoot"),opts).then(function(c){foots.push(c);}); }); });
@@ -1557,7 +1565,7 @@ function exportPdf(){
           items.forEach(function(it){
             var src=it.c;
             if(it.sy!==0||it.sh!==it.c.height){ src=document.createElement("canvas"); src.width=it.c.width; src.height=it.sh; src.getContext("2d").drawImage(it.c,0,it.sy,it.c.width,it.sh,0,0,it.c.width,it.sh); }
-            pdf.addImage(src.toDataURL("image/jpeg",0.9),"JPEG",MX,it.y,CW,it.h,undefined,"FAST");
+            pdf.addImage(src.toDataURL("image/jpeg",0.9),"JPEG",it.x||MX,it.y,it.w||CW,it.h,undefined,"FAST");
           });
           var fc=foots[pi], fh=fc.height/fc.width*CW;
           pdf.addImage(fc.toDataURL("image/jpeg",0.92),"JPEG",MX,PH-8-fh,CW,fh,undefined,"FAST");
