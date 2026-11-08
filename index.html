@@ -351,7 +351,7 @@ footer .wrap{padding-block:18px;display:flex;flex-wrap:wrap;gap:8px 24px;justify
     <textarea id="projectName" class="ptitle" rows="1" placeholder="اكتب اسم المشروع" spellcheck="false"></textarea>
     <div class="studybar">
       <label class="ver tf" for="studyTitleIn"><span>عنوان الدراسة</span><input id="studyTitleIn" type="text" maxlength="80" autocomplete="off" placeholder="دراسة جدوى"></label>
-      <label class="ver tf" for="headerTitleIn"><span>العنوان في الترويسة</span><input id="headerTitleIn" type="text" maxlength="80" autocomplete="off" placeholder="كايزن ديستركت للتطوير العمراني"></label>
+      <label class="ver tf" for="headerTitleIn"><span>العنوان في ترويسة الصفحات</span><input id="headerTitleIn" type="text" maxlength="80" autocomplete="off" placeholder="عنوان مختصر للمشروع"></label>
       <label class="ver" for="versionNo"><span>رقم الإصدار</span><input id="versionNo" type="text" maxlength="12" value="01" autocomplete="off"></label>
       <div class="sb-actions">
         <button class="btn" id="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/></svg>حفظ</button>
@@ -569,7 +569,7 @@ function cloneSalesPct(src){return (src||[]).map(function(x){return {res:Math.ma
 var DEFAULT_HOLDERS=[{n:"كايزن",c:20},{n:"باقي المجموعة",c:140}];
 var HOLDER_COLORS=["--c1","--c3","--c4","--c5","--c6","--c2","--c8","--c7"];
 function cloneHolders(src){return (src||DEFAULT_HOLDERS).map(function(x){return {n:String(x.n||""),c:Math.max(0,+x.c||0),s:Math.max(0,+x.s||0)};});}
-var DEFAULT_STUDY_TITLE="دراسة جدوى", DEFAULT_HEADER_TITLE="كايزن ديستركت للتطوير العمراني";
+var DEFAULT_STUDY_TITLE="دراسة جدوى", DEFAULT_HEADER_TITLE="", COMPANY_NAME="كايزن ديستركت للتطوير العمراني";
 function txt(v,d){v=String(v==null?"":v).trim(); return v||d;}
 function defaults(){var p={};for(var k in FIELDS)p[k]=FIELDS[k].d;p.plans=clonePlans();p.holders=cloneHolders();p.shareMode="land";p.salesMode="even";p.salesPct=[];p.taxBasis="profit";p.studyTitle=DEFAULT_STUDY_TITLE;p.headerTitle=DEFAULT_HEADER_TITLE;return p;}
 
@@ -739,7 +739,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp
 var STORE="grc-feasibility-v3";
 var BASE=compute(defaults());
 var state=defaults();
-try{var saved=JSON.parse(localStorage.getItem(STORE)||"null"); if(saved){for(var k in saved) if(k in FIELDS && isFinite(saved[k])) state[k]=+saved[k]; if(Array.isArray(saved.plans)&&saved.plans.length) state.plans=clonePlans(saved.plans); if(Array.isArray(saved.holders)&&saved.holders.length) state.holders=cloneHolders(saved.holders); if(saved.shareMode==="manual") state.shareMode="manual"; if(saved.salesMode==="custom") state.salesMode="custom"; if(Array.isArray(saved.salesPct)) state.salesPct=cloneSalesPct(saved.salesPct); if(typeof saved.studyTitle==="string") state.studyTitle=saved.studyTitle; if(typeof saved.headerTitle==="string") state.headerTitle=saved.headerTitle;}}catch(e){}
+try{var saved=JSON.parse(localStorage.getItem(STORE)||"null"); if(saved){for(var k in saved) if(k in FIELDS && isFinite(saved[k])) state[k]=+saved[k]; if(Array.isArray(saved.plans)&&saved.plans.length) state.plans=clonePlans(saved.plans); if(Array.isArray(saved.holders)&&saved.holders.length) state.holders=cloneHolders(saved.holders); if(saved.shareMode==="manual") state.shareMode="manual"; if(saved.salesMode==="custom") state.salesMode="custom"; if(Array.isArray(saved.salesPct)) state.salesPct=cloneSalesPct(saved.salesPct); if(typeof saved.studyTitle==="string") state.studyTitle=saved.studyTitle; if(typeof saved.headerTitle==="string" && saved.headerTitle!==COMPANY_NAME) state.headerTitle=saved.headerTitle;}}catch(e){}
 var cfView="y";
 
 /* ---------- Build inputs ---------- */
@@ -1248,7 +1248,7 @@ document.getElementById("btnTheme").addEventListener("click",function(){
 });
 try{var th=localStorage.getItem(STORE+"-theme"); if(th) document.documentElement.setAttribute("data-theme",th);}catch(e){}
 document.getElementById("btnCopy").addEventListener("click",function(){
-  var t=[(projectName()||"المشروع")+" – "+studyTitle()+" · "+headerTitle(),
+  var t=[(projectName()||"المشروع")+" – "+studyTitle()+" · "+COMPANY_NAME,
     "الأرض: "+state.feddan+" فدان ("+nf0.format(r.land)+" م²)",
     "إجمالي المبيعات: "+mil(r.sales)+" مليون جنيه",
     "إجمالي التكاليف شاملة الأرض: "+mil(r.cost)+" مليون جنيه",
@@ -1269,25 +1269,23 @@ var nameEl=document.getElementById("projectName");
 function projectName(){return nameEl.value.trim();}
 function fitName(){nameEl.style.height="auto"; nameEl.style.height=nameEl.scrollHeight+"px";}
 function studyTitle(){return txt(state.studyTitle,DEFAULT_STUDY_TITLE);}
-function headerTitle(){return txt(state.headerTitle,DEFAULT_HEADER_TITLE);}
+function headerTitle(){return txt(state.headerTitle, projectName()||"مشروع بدون اسم");}
 function applyTitles(){
   document.getElementById("studyTitleView").textContent=studyTitle();
-  document.getElementById("brandTitle").textContent=headerTitle();
-  document.getElementById("footBrand").textContent=headerTitle();
   document.getElementById("footStudy").textContent=studyTitle();
 }
 function syncTitles(){
   document.getElementById("studyTitleIn").value=state.studyTitle===DEFAULT_STUDY_TITLE?"":(state.studyTitle||"");
-  document.getElementById("headerTitleIn").value=state.headerTitle===DEFAULT_HEADER_TITLE?"":(state.headerTitle||"");
+  document.getElementById("headerTitleIn").value=state.headerTitle||"";
   applyTitles(); applyName();
 }
-function applyName(){var n=projectName(); document.title=n?n+" · "+studyTitle():studyTitle()+" · "+headerTitle(); document.getElementById("footName").textContent=n;}
+function applyName(){var n=projectName(); document.title=n?n+" · "+studyTitle():studyTitle()+" · "+COMPANY_NAME; document.getElementById("footName").textContent=n;}
 try{nameEl.value=localStorage.getItem(STORE+"-name")||"";}catch(e){}
 nameEl.addEventListener("input",function(){fitName(); applyName(); try{localStorage.setItem(STORE+"-name",nameEl.value);}catch(e){}});
 ["studyTitleIn","headerTitleIn"].forEach(function(id){
   document.getElementById(id).addEventListener("input",function(e){
     var key=id==="studyTitleIn"?"studyTitle":"headerTitle", def=id==="studyTitleIn"?DEFAULT_STUDY_TITLE:DEFAULT_HEADER_TITLE;
-    state[key]=e.target.value.trim()?e.target.value:def; persist(); applyTitles(); applyName(); updateStudyStatus();
+    state[key]=e.target.value.trim()?e.target.value:def; if(key==="headerTitle") state[key]=e.target.value; persist(); applyTitles(); applyName(); updateStudyStatus();
   });
 });
 nameEl.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault(); nameEl.blur();}});
@@ -1320,7 +1318,7 @@ function applyStudy(s){
   if(s.salesMode==="custom") d.salesMode="custom";
   if(Array.isArray(s.salesPct)) d.salesPct=cloneSalesPct(s.salesPct);
   if(typeof s.studyTitle==="string") d.studyTitle=s.studyTitle;
-  if(typeof s.headerTitle==="string") d.headerTitle=s.headerTitle;
+  if(typeof s.headerTitle==="string" && s.headerTitle!==COMPANY_NAME) d.headerTitle=s.headerTitle;
   state=d; persist(); syncInputs(); syncTitles(); renderPlansEditor(); renderHoldersEditor(); renderSalesDist();
 }
 function setNameVer(n,v){nameEl.value=n; verEl.value=v; try{localStorage.setItem(STORE+"-name",n);}catch(e){} fitName(); applyName();}
@@ -1505,8 +1503,8 @@ function buildReport(){
   var notes=document.querySelector(".notes"); B.push('<h2>ملاحظات على النموذج</h2>'+stripIds(notes.outerHTML));
   var rep=document.createElement("div"); rep.className="rep"; rep.setAttribute("aria-hidden","true");
   var logo=document.querySelector(".logo img").src;
-  rep.innerHTML='<div class="rph" id="repHead"><div class="b"><img src="'+logo+'" alt=""><div><b>'+esc(headerTitle())+'</b></div></div><div class="p"><b>'+esc(n)+'</b><small>الإصدار <span class="num">'+esc(v)+'</span> · <span class="num">'+today()+'</span></small></div></div>'+
-    '<div class="rpf" id="repFoot"><span>'+esc(headerTitle())+' · '+esc(n)+' · الإصدار <span class="num">'+esc(v)+'</span></span><span id="repPage"></span></div>'+
+  rep.innerHTML='<div class="rph" id="repHead"><div class="b"><img src="'+logo+'" alt=""><div><b>'+esc(COMPANY_NAME)+'</b></div></div><div class="p"><b>'+esc(headerTitle())+'</b><small>الإصدار <span class="num">'+esc(v)+'</span> · <span class="num">'+today()+'</span></small></div></div>'+
+    '<div class="rpf" id="repFoot"><span>'+esc(COMPANY_NAME)+' · '+esc(headerTitle())+' · الإصدار <span class="num">'+esc(v)+'</span></span><span id="repPage"></span></div>'+
     B.map(function(b){return '<div class="rb">'+b+'</div>';}).join("");
   return rep;
 }
